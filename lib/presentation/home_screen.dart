@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:picker_demo/component/picker/app_file_picker_service.dart';
+import 'package:picker_demo/component/picker/app_file_source.dart';
+import 'package:picker_demo/component/picker/config/picker_config.dart';
+import 'package:picker_demo/component/picker/config/picker_ui_config.dart';
 import 'package:picker_demo/component/picker/pick_image/compressors/image_compressor.dart';
 import 'package:picker_demo/component/picker/pick_image/croppers/free_cropper.dart';
 import 'package:picker_demo/component/picker/pick_image/resizers/image_resizer.dart';
-import 'package:picker_demo/component/picker/picker_config.dart';
+import 'package:picker_demo/component/picker/widgets/picker_action.dart';
 import 'package:picker_demo/component/picker/x_file/x_file_wrapper.dart';
 import 'package:picker_demo/logger/app_logger_impl.dart';
 import 'package:picker_demo/presentation/custom_source_selector_factory.dart';
@@ -33,14 +36,17 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                _selectDocument(context, PickerUiType.customBottomSheet);
+                _selectDocumentCustom(context, PickerUiType.customBottomSheet);
               },
               child: const Text('Select document customBottomSheet'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _selectDocument(context, PickerUiType.dialog);
+                _selectDocument(context, PickerUiType.dialog, [
+                  AppFileSource.gallery,
+                  AppFileSource.camera,
+                ]);
               },
               child: const Text('Select document adaptiveDialog'),
             ),
@@ -81,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _selectDocument(
+  Future<void> _selectDocumentCustom(
     BuildContext context,
     PickerUiType pickerType,
   ) async {
@@ -89,6 +95,22 @@ class _HomeScreenState extends State<HomeScreen> {
       cropper: FreeCropper(cropStyle: CropStyle.rectangle),
       compress: ImageCompressor(fileLimitMb: 1),
       resizer: ImageResizer(),
+      pickerUIConfig: PickerUIConfig.custom(
+        sheetTitle: 'Select Source custom',
+        uiType: PickerUiType.customBottomSheet,
+        actions: [
+          PickerAction(
+            title: 'Custom Gallery',
+            icon: const Icon(Icons.photo_library),
+            source: AppFileSource.gallery,
+          ),
+          PickerAction(
+            title: 'Custom Camera',
+            icon: const Icon(Icons.camera_alt),
+            source: AppFileSource.camera,
+          ),
+        ],
+      ),
     );
 
     final pickerService = AppFilePickerService(config);
@@ -96,7 +118,48 @@ class _HomeScreenState extends State<HomeScreen> {
     final XFileWrapper? result = await pickerService
         .pickFileWithSourceSelection(
           context,
-          uiType: pickerType,
+          onShowProgress: () {
+            _showProgressDialog(context);
+          },
+        );
+
+    if (!context.mounted) return;
+    _hideProgressDialog(context);
+
+    if (result != null && context.mounted) {
+      logger.i('result: $result');
+      setState(() {
+        _imageFile = result;
+      });
+    }
+  }
+
+  Future<void> _selectDocument(
+    BuildContext context,
+    PickerUiType pickerType, [
+    List<AppFileSource>? sourcesToShow = const [
+      AppFileSource.gallery,
+      AppFileSource.camera,
+      AppFileSource.fileSingle,
+    ],
+  ]) async {
+    final config = PickerConfig(
+      cropper: FreeCropper(cropStyle: CropStyle.rectangle),
+      compress: ImageCompressor(fileLimitMb: 1),
+      resizer: ImageResizer(),
+      pickerUIConfig: PickerUIConfig(
+        uiType: PickerUiType.dialog,
+        sourcesToShow: sourcesToShow,
+        sheetTitle: 'Select Source',
+        dialogTitle: 'Select Source',
+      ),
+    );
+
+    final pickerService = AppFilePickerService(config);
+
+    final XFileWrapper? result = await pickerService
+        .pickFileWithSourceSelection(
+          context,
           onShowProgress: () {
             _showProgressDialog(context);
           },

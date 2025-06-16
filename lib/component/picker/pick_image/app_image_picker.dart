@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:picker_demo/component/picker/picker_config.dart';
+import 'package:picker_demo/component/picker/config/picker_config.dart';
 import 'package:picker_demo/component/picker/x_file/x_file_wrapper.dart';
 import 'package:picker_demo/logger/app_logger_impl.dart';
 

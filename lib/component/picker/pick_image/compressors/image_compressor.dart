@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +10,22 @@ import 'package:picker_demo/component/picker/pick_image/compressors/base_compres
 import 'package:picker_demo/component/picker/x_file/x_file_extension.dart';
 import 'package:picker_demo/component/picker/x_file/x_file_wrapper.dart';
 import 'package:picker_demo/logger/app_logger_impl.dart';
+
+class CompressionRequest {
+  final RootIsolateToken token;
+  final SendPort sendPort;
+  final String filePath;
+  final String targetPath;
+  final int quality;
+
+  CompressionRequest(
+    this.token,
+    this.sendPort,
+    this.filePath,
+    this.targetPath,
+    this.quality,
+  );
+}
 
 class ImageCompressor implements BaseCompress {
   /// The target file size limit in megabytes.
@@ -25,9 +43,43 @@ class ImageCompressor implements BaseCompress {
   /// The maximum number of compression attempts to prevent infinite loops.
   final int maxAttempts;
 
+  static Future<void> _compressImage(CompressionRequest request) async {
+    BackgroundIsolateBinaryMessenger.ensureInitialized(request.token);
+
+    final compressedImage = await FlutterImageCompress.compressAndGetFile(
+      request.filePath,
+      request.targetPath,
+      quality: request.quality,
+    );
+
+    request.sendPort.send(compressedImage?.path);
+  }
+
+  Future<XFile?> compressImageInIsolate(
+    String filePath,
+    String targetPath,
+    int quality,
+  ) async {
+    final RootIsolateToken rootIsolateToken = RootIsolateToken.instance!;
+    final receivePort = ReceivePort();
+    final sendPort = receivePort.sendPort;
+    final compressionRequest = CompressionRequest(
+      rootIsolateToken,
+      sendPort,
+      filePath,
+      targetPath,
+      quality,
+    );
+
+    await Isolate.spawn(_compressImage, compressionRequest);
+
+    final compressedImagePath = await receivePort.first as String?;
+    return compressedImagePath != null ? XFile(compressedImagePath) : null;
+  }
+
   ImageCompressor({
     this.fileLimitMb = 10.0,
-    this.initialQuality = 95,
+    this.initialQuality = 100,
     this.minQuality = 60,
     this.qualityStep = 5,
     this.maxAttempts = 10,
@@ -79,10 +131,10 @@ class ImageCompressor implements BaseCompress {
           'c_${DateTime.now().millisecondsSinceEpoch}_${wrapperFile.fileName}',
         );
 
-        final result = await FlutterImageCompress.compressAndGetFile(
+        final result = await compressImageInIsolate(
           compressedFile.path,
           targetPath,
-          quality: currentQuality,
+          currentQuality,
         );
 
         if (result == null) {
