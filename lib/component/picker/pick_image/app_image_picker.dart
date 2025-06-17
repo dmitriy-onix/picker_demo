@@ -1,3 +1,6 @@
+import 'dart:isolate';
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:picker_demo/component/picker/config/picker_config.dart';
@@ -14,7 +17,7 @@ class AppImagePicker {
     ImageSource imageSource,
   ) async {
     try {
-      final XFile? pickedFile = await _getImage(imageSource);
+      final XFile? pickedFile = await _pickImage(imageSource);
       if (pickedFile == null) return null;
 
       XFileWrapper? fileWrapper = XFileWrapper(
@@ -33,6 +36,24 @@ class AppImagePicker {
       logger.crash(error: e, stackTrace: s);
       return null;
     }
+  }
+
+  Future<XFile?> _pickImage(ImageSource imageSource) async {
+    final ReceivePort receivePort = ReceivePort();
+    final RootIsolateToken? isolateToken = RootIsolateToken.instance;
+    if (isolateToken == null) {
+      return null;
+    }
+    await Isolate.spawn(_isolatePickImage, [
+      isolateToken,
+      receivePort.sendPort,
+      imageSource,
+    ]);
+    final String? path = await receivePort.first;
+    if (path == null) {
+      return null;
+    }
+    return XFile(path);
   }
 
   Future<XFileWrapper?> _tryCropImage(
@@ -61,12 +82,13 @@ class AppImagePicker {
     }
     return file;
   }
+}
 
-  Future<XFile?> _getImage(ImageSource source) async {
-    return await ImagePicker().pickImage(
-      source: source,
-      preferredCameraDevice: config.preferredCameraDevice,
-      imageQuality: 100,
-    );
-  }
+Future<void> _isolatePickImage(List<dynamic> args) async {
+  BackgroundIsolateBinaryMessenger.ensureInitialized(args[0]);
+  final SendPort sendPort = args[1];
+  final ImageSource imageSource = args[2];
+  final ImagePicker imagePicker = ImagePicker();
+  final XFile? file = await imagePicker.pickImage(source: imageSource);
+  sendPort.send(file?.path);
 }

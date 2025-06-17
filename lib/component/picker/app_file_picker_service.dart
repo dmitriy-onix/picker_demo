@@ -6,7 +6,6 @@ import 'package:picker_demo/component/picker/pick_file/allowed_file_type.dart';
 import 'package:picker_demo/component/picker/pick_file/app_file_picker.dart';
 import 'package:picker_demo/component/picker/pick_image/app_image_picker.dart';
 import 'package:picker_demo/component/picker/source_selector/default_source_selector_factory.dart';
-import 'package:picker_demo/component/picker/source_selector/source_selector_factory.dart';
 import 'package:picker_demo/component/picker/x_file/x_file_wrapper.dart';
 
 enum PickerUiType { dialog, customBottomSheet }
@@ -24,36 +23,17 @@ class AppFilePickerService {
     ],
     VoidCallback? onShowProgress,
   }) async {
-    AppFileSource? source;
     if (!context.mounted) return null;
 
-    final sourceSelector = config.sourceSelectorFactory;
-    if (sourceSelector != null) {
-      source = await _createSourceSelectorWithFactory(
-        context,
-        factory: sourceSelector,
-      );
-    } else {
-      source = await _showSourceSelector(context);
-    }
+    final factory =
+        config.sourceSelectorFactory ??
+        DefaultSourceSelectorFactory(config: config);
+
+    final AppFileSource? source = await factory.createSourceSelector(context);
 
     if (source == null || !context.mounted) return null;
     onShowProgress?.call();
     return _pick(context, source, allowedFileExtensions);
-  }
-
-  Future<AppFileSource?> _showSourceSelector(BuildContext context) async {
-    final factory = DefaultSourceSelectorFactory(
-      config: config,
-    );
-    return _createSourceSelectorWithFactory(context, factory: factory);
-  }
-
-  Future<AppFileSource?> _createSourceSelectorWithFactory(
-    BuildContext context, {
-    required SourceSelectorFactory factory,
-  }) {
-    return factory.createSourceSelector(context);
   }
 
   Future<XFileWrapper?> _pick(
