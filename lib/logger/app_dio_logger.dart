@@ -8,7 +8,7 @@ import 'package:picker_demo/logger/logger_factory.dart';
 /// appropriate formatting and output routing based on the build mode.
 class AppDioLogger {
   /// Singleton instance configured based on build mode
-  static final Logger instance = LoggerFactory.createDioLogger(
+  static final Logger instance = LoggerFactory.createNetworkLogger(
     isDebugMode: kDebugMode,
   );
 }

@@ -86,10 +86,10 @@ class LoggerFactory {
   }
 
   /// Creates a logger optimized for Dio HTTP client logging
-  static Logger createDioLogger({bool isDebugMode = kDebugMode}) {
+  static Logger createNetworkLogger({bool isDebugMode = kDebugMode}) {
     if (isDebugMode) {
       return Logger(
-        printer: _createDioPrinter(),
+        printer: _createNetworkPrinter(),
         output: AppConsoleLogOutput(prefix: '[HTTP] '),
         filter: DevelopmentFilter(),
       );
@@ -161,7 +161,7 @@ class LoggerFactory {
   }
 
   /// Creates the DIO-specific printer with HTTP-focused formatting
-  static PrefixPrinter _createDioPrinter() {
+  static PrefixPrinter _createNetworkPrinter() {
     return PrefixPrinter(
       SimplePrinter(colors: kDebugMode),
       debug: '🌐 DEBUG',
