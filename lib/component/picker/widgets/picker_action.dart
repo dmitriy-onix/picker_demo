@@ -6,7 +6,7 @@ class PickerAction {
 
   final Widget icon;
 
-  final AppFileSource source;
+  final MediaSource source;
 
   const PickerAction({
     required this.title,

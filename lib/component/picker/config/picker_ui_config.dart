@@ -12,60 +12,60 @@ class PickerUIConfig {
   PickerUIConfig({
     this.sheetTitle = 'Select Source',
     this.dialogTitle = 'Select Source',
-    this.uiType = PickerUiType.customBottomSheet,
-    List<AppFileSource>? sourcesToShow,
+    this.uiType = PickerUiType.bottomSheet,
+    List<MediaSource>? sourcesToShow,
   }) : actions = _createActionsFromSources(
-         sourcesToShow ?? AppFileSource.values,
+         sourcesToShow ?? MediaSource.values,
        );
 
   const PickerUIConfig.custom({
     this.sheetTitle = 'Select Source',
     this.dialogTitle = '',
-    this.uiType = PickerUiType.customBottomSheet,
+    this.uiType = PickerUiType.bottomSheet,
     required this.actions,
   });
 
   const PickerUIConfig.defaultConfig({
     this.sheetTitle = 'Select Source',
     this.dialogTitle = 'Select Source',
-    this.uiType = PickerUiType.customBottomSheet,
+    this.uiType = PickerUiType.bottomSheet,
     this.actions = const [
       PickerAction(
         title: 'Gallery',
         icon: Icon(Icons.photo_library_outlined),
-        source: AppFileSource.gallery,
+        source: MediaSource.gallery,
       ),
       PickerAction(
         title: 'Camera',
         icon: Icon(Icons.camera_alt_outlined),
-        source: AppFileSource.camera,
+        source: MediaSource.camera,
       ),
       PickerAction(
         title: 'File',
         icon: Icon(Icons.insert_drive_file_outlined),
-        source: AppFileSource.fileSingle,
+        source: MediaSource.fileSystem,
       ),
     ],
   });
 
   static List<PickerAction> _createActionsFromSources(
-    List<AppFileSource> sources,
+    List<MediaSource> sources,
   ) {
-    final defaultActions = <AppFileSource, PickerAction>{
-      AppFileSource.gallery: const PickerAction(
+    final defaultActions = <MediaSource, PickerAction>{
+      MediaSource.gallery: const PickerAction(
         title: 'Gallery',
         icon: Icon(Icons.photo_library_outlined),
-        source: AppFileSource.gallery,
+        source: MediaSource.gallery,
       ),
-      AppFileSource.camera: const PickerAction(
+      MediaSource.camera: const PickerAction(
         title: 'Camera',
         icon: Icon(Icons.camera_alt_outlined),
-        source: AppFileSource.camera,
+        source: MediaSource.camera,
       ),
-      AppFileSource.fileSingle: const PickerAction(
+      MediaSource.fileSystem: const PickerAction(
         title: 'File',
         icon: Icon(Icons.insert_drive_file_outlined),
-        source: AppFileSource.fileSingle,
+        source: MediaSource.fileSystem,
       ),
     };
 

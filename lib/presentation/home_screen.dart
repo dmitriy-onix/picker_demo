@@ -6,6 +6,7 @@ import 'package:picker_demo/component/picker/app_file_picker_service.dart';
 import 'package:picker_demo/component/picker/app_file_source.dart';
 import 'package:picker_demo/component/picker/config/picker_config.dart';
 import 'package:picker_demo/component/picker/config/picker_ui_config.dart';
+import 'package:picker_demo/component/picker/pick_file/allowed_file_type.dart';
 import 'package:picker_demo/component/picker/pick_image/compressors/image_compressor.dart';
 import 'package:picker_demo/component/picker/pick_image/croppers/free_cropper.dart';
 import 'package:picker_demo/component/picker/pick_image/resizers/image_resizer.dart';
@@ -23,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   XFileWrapper? _imageFile;
+  XFileWrapper? _selectedFile;
 
   @override
   Widget build(BuildContext context) {
@@ -36,39 +38,55 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                _selectDocumentCustom(context, PickerUiType.customBottomSheet);
+                _selectImageCustom(context, PickerUiType.bottomSheet);
               },
-              child: const Text('Select document customBottomSheet'),
+              child: const Text('Select image bottomSheet'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _selectDocument(context, PickerUiType.dialog, [
-                  AppFileSource.gallery,
-                  AppFileSource.camera,
-                ]);
+                _selectImage(context, PickerUiType.dialog);
               },
-              child: const Text('Select document adaptiveDialog'),
+              child: const Text('Select image dialog'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _selectDocumentCustomSourceUi(
+                _selectImageCustomSourceUi(
                   context,
-                  CustomPickerUiType.adaptiveDialog,
+                  CustomPickerUiType.iosActionSheet,
                 );
               },
-              child: const Text('Select document custom adaptiveDialog'),
+              child: const Text('Select image custom iosActionSheet'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _selectDocumentCustomSourceUi(
+                _selectImageCustomSourceUi(
+                  context,
+                  CustomPickerUiType.materialActionSheet,
+                  [MediaSource.camera],
+                );
+              },
+              child: const Text('Select image custom materialActionSheet'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                _selectImageCustomSourceUi(
                   context,
                   CustomPickerUiType.modalBottomSheet,
+                  [MediaSource.gallery],
                 );
               },
-              child: const Text('Select document custom modalBottomSheet'),
+              child: const Text('Select image custom modalBottomSheet'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                _selectFile(context);
+              },
+              child: const Text('Select document file'),
             ),
             SizedBox(height: 30),
             if (imageFile != null)
@@ -81,13 +99,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const Text('Could not load image.');
                 },
               ),
+            if (_selectedFile != null) ...[
+              SizedBox(height: 20),
+              Text('Selected file: ${_selectedFile!.fileName}'),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Future<void> _selectDocumentCustom(
+  Future<void> _selectImageCustom(
     BuildContext context,
     PickerUiType pickerType,
   ) async {
@@ -96,18 +118,18 @@ class _HomeScreenState extends State<HomeScreen> {
       compress: ImageCompressor(fileLimitMb: 1),
       resizer: ImageResizer(),
       pickerUIConfig: PickerUIConfig.custom(
-        sheetTitle: 'Select Source custom',
-        uiType: PickerUiType.customBottomSheet,
+        sheetTitle: 'Select Source custom labels and icons',
+        uiType: PickerUiType.bottomSheet,
         actions: [
           PickerAction(
             title: 'Custom Gallery',
             icon: const Icon(Icons.photo_library),
-            source: AppFileSource.gallery,
+            source: MediaSource.gallery,
           ),
           PickerAction(
             title: 'Custom Camera',
             icon: const Icon(Icons.camera_alt),
-            source: AppFileSource.camera,
+            source: MediaSource.camera,
           ),
         ],
       ),
@@ -116,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final pickerService = AppFilePickerService(config);
 
     final XFileWrapper? result = await pickerService
-        .pickFileWithSourceSelection(
+        .pickImageWithSourceSelection(
           context,
           onShowProgress: () {
             _showProgressDialog(context);
@@ -134,13 +156,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _selectDocument(
+  Future<void> _selectImage(
     BuildContext context,
     PickerUiType pickerType, [
-    List<AppFileSource>? sourcesToShow = const [
-      AppFileSource.gallery,
-      AppFileSource.camera,
-      AppFileSource.fileSingle,
+    List<MediaSource>? sourcesToShow = const [
+      MediaSource.gallery,
+      MediaSource.camera,
     ],
   ]) async {
     final config = PickerConfig(
@@ -148,17 +169,17 @@ class _HomeScreenState extends State<HomeScreen> {
       compress: ImageCompressor(fileLimitMb: 1),
       resizer: ImageResizer(),
       pickerUIConfig: PickerUIConfig(
-        uiType: PickerUiType.dialog,
-        sourcesToShow: sourcesToShow,
+        uiType: pickerType,
         sheetTitle: 'Select Source',
         dialogTitle: 'Select Source',
+        sourcesToShow: sourcesToShow,
       ),
     );
 
     final pickerService = AppFilePickerService(config);
 
     final XFileWrapper? result = await pickerService
-        .pickFileWithSourceSelection(
+        .pickImageWithSourceSelection(
           context,
           onShowProgress: () {
             _showProgressDialog(context);
@@ -176,20 +197,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _selectDocumentCustomSourceUi(
+  Future<void> _selectImageCustomSourceUi(
     BuildContext context,
-    CustomPickerUiType pickerType,
-  ) async {
+    CustomPickerUiType pickerType, [
+    List<MediaSource> sourcesToShow = const [
+      MediaSource.gallery,
+      MediaSource.camera,
+    ],
+  ]) async {
     final config = PickerConfig(
       cropper: FreeCropper(cropStyle: CropStyle.rectangle),
       compress: ImageCompressor(fileLimitMb: 2),
-      sourceSelectorFactory: CustomSourceSelectorFactory(pickerType),
+      sourceSelectorFactory: CustomSourceSelectorFactory(
+        pickerType,
+        sourcesToShow,
+      ),
     );
 
     final pickerService = AppFilePickerService(config);
 
     final XFileWrapper? result = await pickerService
-        .pickFileWithSourceSelection(
+        .pickImageWithSourceSelection(
           context,
           onShowProgress: () {
             _showProgressDialog(context);
@@ -203,6 +231,33 @@ class _HomeScreenState extends State<HomeScreen> {
       logger.i('result: $result');
       setState(() {
         _imageFile = result;
+      });
+    }
+  }
+
+  Future<void> _selectFile(BuildContext context) async {
+    final config = PickerConfig(
+      pickerUIConfig: PickerUIConfig(dialogTitle: 'Select Document'),
+    );
+
+    final pickerService = AppFilePickerService(config);
+
+    final XFileWrapper? result = await pickerService
+        .pickFileWithSourceSelection(
+          context,
+          allowedFileTypes: [AllowedFileType.pdf, AllowedFileType.txt],
+          onShowProgress: () {
+            _showProgressDialog(context);
+          },
+        );
+
+    if (!context.mounted) return;
+    _hideProgressDialog(context);
+
+    if (result != null && context.mounted) {
+      logger.i('Selected file: ${result.fileName}');
+      setState(() {
+        _selectedFile = result;
       });
     }
   }

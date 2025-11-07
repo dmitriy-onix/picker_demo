@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dart format:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(tree:*)",
+      "Bash(dart run build_runner:*)",
+      "Bash(mv:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -10,17 +10,17 @@ class DefaultPickerUI {
 
   DefaultPickerUI({required this.context, required this.config});
 
-  Future<AppFileSource?> show() {
+  Future<MediaSource?> show() {
     switch (config.uiType) {
-      case PickerUiType.customBottomSheet:
+      case PickerUiType.bottomSheet:
         return _showCustomBottomSheet();
       case PickerUiType.dialog:
         return _showDialog();
     }
   }
 
-  Future<AppFileSource?> _showCustomBottomSheet() {
-    return showModalBottomSheet<AppFileSource>(
+  Future<MediaSource?> _showCustomBottomSheet() {
+    return showModalBottomSheet<MediaSource>(
       context: context,
       builder:
           (ctx) => SafeArea(
@@ -50,8 +50,8 @@ class DefaultPickerUI {
     }).toList();
   }
 
-  Future<AppFileSource?> _showDialog() {
-    return showDialog<AppFileSource>(
+  Future<MediaSource?> _showDialog() {
+    return showDialog<MediaSource>(
       context: context,
       builder: (dialogContext) {
         final isIOS = Theme.of(dialogContext).platform == TargetPlatform.iOS;
